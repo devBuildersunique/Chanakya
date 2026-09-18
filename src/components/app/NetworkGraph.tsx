@@ -7,6 +7,7 @@ import {
   type EntityKind,
   type EntityNode,
 } from "@/data/case-data";
+import type { ProcessingGraph } from "@/lib/processing-api";
 import { cn } from "@/lib/utils";
 
 const W = 1480;
@@ -18,6 +19,7 @@ export interface GraphView {
 }
 
 interface Props {
+  graph?: ProcessingGraph;
   visibleKinds: Set<EntityKind>;
   visibleRels: Set<string>;
   minConfidence: number;
@@ -52,6 +54,7 @@ function shapePath(node: EntityNode, r: number) {
 }
 
 export function NetworkGraph({
+  graph,
   visibleKinds,
   visibleRels,
   minConfidence,
@@ -70,15 +73,17 @@ export function NetworkGraph({
 
   const reset = useCallback(() => setTransform({ k: 0.56, x: 24, y: 170 }), []);
 
-  const nodeMap = useMemo(() => new Map(NODES.map((n) => [n.id, n])), []);
+  const graphNodes = graph?.nodes ?? NODES;
+  const graphEdges = graph?.edges ?? EDGES;
+  const nodeMap = useMemo(() => new Map(graphNodes.map((n) => [n.id, n])), [graphNodes]);
 
   const shown = useMemo(() => {
     const q = query.trim().toLowerCase();
-    const base = NODES.filter((n) => {
+    const base = graphNodes.filter((n) => {
       if (!visibleKinds.has(n.kind)) return false;
       if ((n.confidence ?? 100) < minConfidence) return false;
       if (focusSet && !focusSet.includes(n.id) && !expanded.has(n.id)) {
-        const touchesFocus = EDGES.some(
+        const touchesFocus = graphEdges.some(
           (e) => (expanded.has(e.from) && e.to === n.id) || (expanded.has(e.to) && e.from === n.id),
         );
         if (!touchesFocus) return false;
@@ -99,18 +104,18 @@ export function NetworkGraph({
         )
       : null;
     return { nodes: base, ids, matches };
-  }, [visibleKinds, minConfidence, focusSet, expanded, query]);
+  }, [visibleKinds, minConfidence, focusSet, expanded, query, graphNodes, graphEdges]);
 
   const edges = useMemo(
     () =>
-      EDGES.filter(
+      graphEdges.filter(
         (e) =>
           visibleRels.has(e.kind) &&
           e.confidence >= minConfidence &&
           shown.ids.has(e.from) &&
           shown.ids.has(e.to),
       ),
-    [visibleRels, minConfidence, shown.ids],
+    [visibleRels, minConfidence, shown.ids, graphEdges],
   );
 
   const neighborIds = useMemo(() => {

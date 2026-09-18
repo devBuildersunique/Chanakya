@@ -1,0 +1,25 @@
+{
+  "subject": {
+    "name": "Rahul Kumar",
+    "case_number": "CASE-2026-0412",
+    "aliases": [
+      "R. Kumar",
+      "Rahul K"
+    ]
+  },
+  "known_locations": [
+    "Malappuram",
+    "Kochi"
+  ],
+  "known_phone_numbers": [
+    "9876543210"
+  ],
+  "associates": [
+    {
+      "name": "Ahmed Khan"
+    },
+    {
+      "name": "Suresh Menon"
+    }
+  ]
+}

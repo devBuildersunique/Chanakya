@@ -1,0 +1,13 @@
+{
+  "files": [
+    "report.txt",
+    "report.docx",
+    "report.pdf",
+    "evidence.png",
+    "cdr.csv",
+    "transactions.xlsx",
+    "criminal_history.json",
+    "expected_results.json",
+    "README.md"
+  ]
+}

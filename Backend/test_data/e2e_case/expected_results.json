@@ -1,0 +1,75 @@
+{
+  "narrative_expected": [
+    {
+      "relation": "MET",
+      "subject": "Rahul Kumar",
+      "object": "Ahmed Khan"
+    },
+    {
+      "relation": "CONTACTED",
+      "subject": "Rahul Kumar",
+      "object": "Ahmed Khan"
+    },
+    {
+      "relation": "VISITED",
+      "subject": "Rahul Kumar",
+      "object": "Kochi"
+    },
+    {
+      "relation": "LOCATED_AT",
+      "subject": "Ahmed Khan",
+      "object": "Malappuram"
+    },
+    {
+      "rejection": "explicit negation",
+      "subject": "Rahul Kumar",
+      "object": "9123456789"
+    },
+    {
+      "rejection": "unestablished/reverse claim",
+      "subject": "Suresh Menon",
+      "object": "Rahul Kumar"
+    }
+  ],
+  "cdr_expected": [
+    {
+      "relation": "CONTACTED",
+      "subject": "9876543210",
+      "object": "9123456789",
+      "row": 2
+    },
+    {
+      "relation": "CONTACTED",
+      "subject": "9123456789",
+      "object": "9876543210",
+      "row": 3
+    }
+  ],
+  "transactions_expected": [
+    {
+      "relation": "TRANSFERRED_TO",
+      "subject": "ACCT-1001",
+      "object": "ACCT-2002",
+      "row": 2
+    },
+    {
+      "relation": "TRANSFERRED_TO",
+      "subject": "ACCT-2002",
+      "object": "ACCT-3003",
+      "row": 3
+    },
+    {
+      "relation": "TRANSFERRED_TO",
+      "subject": "ACCT-1001",
+      "object": "ACCT-3003",
+      "row": 4
+    }
+  ],
+  "json_provenance": {
+    "subject": "$.subject.name",
+    "case_number": "$.subject.case_number",
+    "locations": "$.known_locations[*]",
+    "phones": "$.known_phone_numbers[*]"
+  },
+  "synthetic_only": true
+}

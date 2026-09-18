@@ -4,6 +4,7 @@ import { Crosshair, Info, Layers, RotateCcw, Search, Sparkles, Target, X } from 
 import { AppShell } from "@/components/app/AppShell";
 import { Chip, Confidence, EvidenceLink, EvidenceViewer, SeverityTag } from "@/components/app/bits";
 import { NetworkGraph } from "@/components/app/NetworkGraph";
+import { useLiveProcessingResult } from "@/lib/processing-state";
 import {
   EDGES,
   ENTITY_KIND_META,
@@ -11,7 +12,6 @@ import {
   NODES,
   PATTERNS,
   REL_KINDS,
-  nodeById,
   type EntityKind,
 } from "@/data/case-data";
 
@@ -46,6 +46,10 @@ const ALL_KINDS = Object.keys(ENTITY_KIND_META) as EntityKind[];
 function Network() {
   const { pattern, node } = Route.useSearch();
   const navigate = useNavigate();
+  const live = useLiveProcessingResult();
+  const liveGraph = live?.graph;
+  const graphNodes = liveGraph?.nodes ?? NODES;
+  const graphEdges = liveGraph?.edges ?? EDGES;
 
   const [kinds, setKinds] = useState<Set<EntityKind>>(new Set(ALL_KINDS));
   const [rels, setRels] = useState<Set<string>>(new Set(REL_KINDS));
@@ -68,22 +72,30 @@ function Network() {
     apply(next);
   };
 
-  const nodeData = selectedNode ? nodeById(selectedNode) : null;
-  const edgeData = selectedEdge ? EDGES.find((e) => e.id === selectedEdge) : null;
+  const nodeData = selectedNode
+    ? (graphNodes.find((item) => item.id === selectedNode) ?? null)
+    : null;
+  const edgeData = selectedEdge
+    ? (graphEdges.find((item) => item.id === selectedEdge) ?? null)
+    : null;
   const explanation = selectedNode ? FLAG_EXPLANATIONS[selectedNode] : undefined;
 
   const neighborStats = useMemo(() => {
     if (!selectedNode) return null;
-    const ids = EDGES.filter((e) => e.from === selectedNode || e.to === selectedNode).map((e) =>
-      e.from === selectedNode ? e.to : e.from,
-    );
+    const ids = graphEdges
+      .filter((e) => e.from === selectedNode || e.to === selectedNode)
+      .map((e) => (e.from === selectedNode ? e.to : e.from));
     const counts: Partial<Record<EntityKind, number>> = {};
     ids.forEach((id) => {
-      const n = nodeById(id);
+      const n = graphNodes.find((item) => item.id === id);
       if (n) counts[n.kind] = (counts[n.kind] ?? 0) + 1;
     });
     return counts;
-  }, [selectedNode]);
+  }, [selectedNode, graphEdges, graphNodes]);
+
+  useMemo(() => {
+    if (liveGraph) setRels(new Set(liveGraph.edges.map((edge) => edge.kind)));
+  }, [liveGraph]);
 
   return (
     <AppShell padded={false}>
@@ -116,7 +128,7 @@ function Network() {
                   onChange={() => toggle(kinds, k, setKinds)}
                   label={ENTITY_KIND_META[k].label}
                   dot={ENTITY_KIND_META[k].token}
-                  count={NODES.filter((n) => n.kind === k).length}
+                  count={graphNodes.filter((n) => n.kind === k).length}
                 />
               ))}
             </FilterGroup>
@@ -128,7 +140,7 @@ function Network() {
                   checked={rels.has(r)}
                   onChange={() => toggle(rels, r, setRels)}
                   label={r}
-                  count={EDGES.filter((e) => e.kind === r).length}
+                  count={graphEdges.filter((e) => e.kind === r).length}
                   mono
                 />
               ))}
@@ -254,6 +266,7 @@ function Network() {
 
           <div className="min-h-0 flex-1">
             <NetworkGraph
+              {...(liveGraph ? { graph: liveGraph } : {})}
               visibleKinds={kinds}
               visibleRels={rels}
               minConfidence={minConf}
@@ -283,10 +296,10 @@ function Network() {
               <div className="mt-5 space-y-2">
                 <div className="label-eyebrow">Network summary</div>
                 {[
-                  ["Entities", NODES.length],
-                  ["Relationships", EDGES.length],
-                  ["Potentially suspicious links", EDGES.filter((e) => e.suspicious).length],
-                  ["High-alert entities", NODES.filter((n) => n.alert === "high").length],
+                  ["Entities", graphNodes.length],
+                  ["Relationships", graphEdges.length],
+                  ["Potentially suspicious links", graphEdges.filter((e) => e.suspicious).length],
+                  ["High-alert entities", graphNodes.filter((n) => n.alert === "high").length],
                 ].map(([l, v]) => (
                   <div
                     key={l as string}
@@ -305,9 +318,13 @@ function Network() {
               <div className="label-eyebrow">Relationship</div>
               <div className="mt-2 font-mono text-sm text-primary">{edgeData.kind}</div>
               <div className="mt-3 space-y-1.5 text-[13px]">
-                <div className="text-foreground">{nodeById(edgeData.from)?.label}</div>
+                <div className="text-foreground">
+                  {graphNodes.find((item) => item.id === edgeData.from)?.label}
+                </div>
                 <div className="text-muted-foreground">↓</div>
-                <div className="text-foreground">{nodeById(edgeData.to)?.label}</div>
+                <div className="text-foreground">
+                  {graphNodes.find((item) => item.id === edgeData.to)?.label}
+                </div>
               </div>
               <div className="mt-4 space-y-3">
                 <div>
